@@ -1,42 +1,38 @@
 package Example1;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Vector;
 
 public class SharedResource {
-    private boolean[] resource;
+    private final boolean[] resource;
 
     public SharedResource(int max_cells) {
         resource = new boolean[max_cells];
-        for (int i = 0; i < max_cells; i++) {
-            resource[i] = true;
-        }
+        Arrays.fill(resource, true);
     }
 
     public synchronized int request() {
-        while (true) {
-            for (int i = 0; i < 2; i++) {
-                int pos = look_for_empty_spaces();
-                if (pos != -1) {
-                    return pos;
-                }
-            }
-            try {
 
+        while (look_for_empty_spaces() == -1) {
+            try {
                 wait();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
+
+        int pos = look_for_empty_spaces();
+        resource[pos] = false;
+        return pos;
     }
 
-    private int look_for_empty_spaces() {
+    private synchronized int look_for_empty_spaces() {
         for (int i = 0; i < resource.length; i++) {
             if (resource[i]) {
-                resource[i]=false;
                 return i;
             }
         }
-        notify();
         return -1;
     }
 
