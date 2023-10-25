@@ -1,87 +1,81 @@
 package VetOffice;
 
 import java.util.Vector;
+import java.util.concurrent.Semaphore;
 
 public class WaitRoom {
-    private Vector<Cat> cats;
-    private Vector<Dog> dogs;
+    private final Vector<Cat> cats;
+    private final Vector<Dog> dogs;
     private String name;
 
+    private Semaphore semaphore;
 
-    public WaitRoom(String name) {
+    public WaitRoom(String name, Semaphore semaphore) {
         this.name = name;
         this.cats = new Vector<>();
         this.dogs = new Vector<>();
-
+        this.semaphore = semaphore;
     }
 
-    public boolean enterRoom(Dog dog) {
-        try {
-            Main.semaphore.acquire();
-            if (dogs.size() == 4 || cats.size() != 0) {
-                Main.semaphore.release();
-                return false;
-
+    public synchronized void enterRoom(Dog dog, Cat cat, boolean isDog) {
+        if (isDog) {
+            while (dogs.size() == 4 || cats.size() != 0) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-        dogs.add(dog);
-        System.out.println(waitRoomToString());
-        Main.semaphore.release();
-        return true;
-    }
-
-    public boolean enterRoom(Cat cat) {
-        try {
-
-            Main.semaphore.acquire();
-            if (dogs.size() != 0 || cats.size() != 0) {
-                Main.semaphore.release();
-                return false;
+            dogs.add(dog);
+            System.out.println(waitRoomToString());
+        } else {
+            while (dogs.size() != 0 || cats.size() != 0) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            cats.add(cat);
+            System.out.println(waitRoomToString());
         }
 
-        cats.add(cat);
-        System.out.println(waitRoomToString());
-        Main.semaphore.release();
-        return true;
+
     }
 
-    public void exitRoom(Dog dog) {
-        try {
-            Main.semaphore.acquire();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+    public void exitRoom(Dog dog, Cat cat, boolean isDog) {
+        if (isDog) {
+            synchronized (this) {
+                notify();
+                dogs.remove(dog);
+
+                System.out.println(waitRoomToString());
+            }
+        } else {
+            synchronized (this) {
+
+                cats.remove(cat);
+                notify();
+                System.out.println(waitRoomToString());
+            }
         }
-        dogs.remove(dog);
-        System.out.println(waitRoomToString());
-        Main.semaphore.release();
+
     }
 
-    public void exitRoom(Cat cat) {
-        try {
-            Main.semaphore.acquire();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        cats.remove(cat);
-        System.out.println(waitRoomToString());
-        Main.semaphore.release();
-    }
-    public String waitRoomToString(){
-        StringBuilder str=new StringBuilder();
+    public synchronized String waitRoomToString() {
+        StringBuilder str = new StringBuilder();
         str.append("waitroom:  ");
-        for(Cat cat: cats){
-            str.append(cat.name+",,,");
+        synchronized (dogs) {
+            synchronized (cats) {
+                for (Cat cat : cats) {
+                    str.append(cat.name + ",,,");
+                }
+                for (Dog dog : dogs) {
+                    str.append(dog.name + ",,,");
+                }
+                return str.toString();
+            }
         }
-        for(Dog dog:dogs){
-            str.append(dog.name+",,,");
-        }
-        return str.toString();
     }
 
 }

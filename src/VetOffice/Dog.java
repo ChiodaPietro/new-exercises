@@ -14,14 +14,12 @@ public class Dog implements  Runnable{
         this.index=index;
     }
     public void run(){
-        while( !waitRoom.enterRoom(this)){
-            waitRoom.enterRoom(this);
-        }
+       waitRoom.enterRoom(this, null, true);
         try {
             Thread.sleep(new Random().nextInt(1000, 3000));
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        waitRoom.exitRoom(this);
+        waitRoom.exitRoom(this, null, true);
     }
 }

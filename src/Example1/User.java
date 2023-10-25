@@ -20,13 +20,13 @@ public class User implements Runnable {
         for (int i = 0; i < requests; i++) {
          pos=sharedResource.request();
 
-            System.out.println(name + " I acquired " + pos);
+
             try {
                 Thread.sleep(new Random().nextInt(1000, 2999));
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                sharedResource.release(pos);
             }
-            System.out.println(name + " I am releasing " + pos);
+
             sharedResource.release(pos);
         }
     }

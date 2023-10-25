@@ -10,9 +10,9 @@ that space is free now
  */
 public class Main {
     public static void main(String[] args) {
-        SharedResource sharedResource = new SharedResource(2);
+        SharedResource sharedResource = new SharedResource(10);
         for (int i = 0; i < 10; i++) {
-            new Thread(new User("user " + i, sharedResource, new Random().nextInt(1,3))).start();
+            new Thread(new User("user " + i, sharedResource, new Random().nextInt(2,3))).start();
         }
     }
 

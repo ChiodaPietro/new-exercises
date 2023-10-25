@@ -6,15 +6,17 @@ import java.util.Vector;
 
 public class SharedResource {
     private final boolean[] resource;
+    private int available;
 
     public SharedResource(int max_cells) {
         resource = new boolean[max_cells];
         Arrays.fill(resource, true);
+        available=max_cells;
     }
 
     public synchronized int request() {
 
-        while (look_for_empty_spaces() == -1) {
+        while (available==0) {
             try {
                 wait();
             } catch (InterruptedException e) {
@@ -24,6 +26,8 @@ public class SharedResource {
 
         int pos = look_for_empty_spaces();
         resource[pos] = false;
+        System.out.println(pos+" acquired");
+        available--;
         return pos;
     }
 
@@ -38,7 +42,9 @@ public class SharedResource {
 
     public synchronized void release(int pos) {
         resource[pos] = true;
-        notifyAll();
+        System.out.println(pos+" released");
+        available++;
+        notify();
     }
 
 }
